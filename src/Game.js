@@ -9,13 +9,16 @@ class Game extends Component {
     this.state = {
       xBid:1000,
       oBid:1000,
-      xBank:100,
-      oBank:100,
+      
       oLastBid:0,
       xLastBid:0,
       history: [
         {
-          squares: Array(9).fill(null)
+          squares: Array(9).fill(null),
+          xBank:100,
+          oBank:100,
+          xLastBid:0,
+          oLastBid:0
         }
       ],
       stepNumber: 0,
@@ -32,6 +35,9 @@ class Game extends Component {
     const history = this.state.history.slice(0, this.state.stepNumber + 1);
     const current = history[history.length - 1];
     const squares = current.squares.slice();
+
+    var { xBank, oBank, oLastBid, xLastBid} = this.state
+
     if (calculateWinner(squares) || squares[i]) {
       return;
     }
@@ -39,7 +45,12 @@ class Game extends Component {
     this.setState({
       history: history.concat([
         {
-          squares: squares
+          squares: squares,
+          xBank:xBank,
+          oBank:oBank,
+          xLastBid:xLastBid,
+          oLastBid:oLastBid
+
         }
       ]),
       stepNumber: history.length,
@@ -51,38 +62,50 @@ class Game extends Component {
   }
 
   jumpTo(step) {
+    const history = this.state.history;
+    const current = history[step];
     this.setState({
       stepNumber: step,
-      xIsNext: (step % 2) === 0
+      xIsNext: (step % 2) === 0,
+      oBank: current.oBank,
+      xBank: current.xBank
+
     });
   }
 
 
 
   bid(isX){
-    var {xBid, xBank, oBid, oBank} = this.state
+    var xBid, xBank, oBid, oBank
+    const history = this.state.history;
+    const current = history[this.state.stepNumber];
+
     
     var xIsNext
-    while(xBid > xBank){
-      xBid = document.getElementById("bidX").value
+    
+    
+    xBid = document.getElementById("bidX").value    
+    oBid = document.getElementById("bidO").value
+    
+    if (xBid > current.xBank) {
+      return false  
+    } else if (oBid > current.oBank){
+      return false
     }
-
-    while(oBid > oBank){
-      oBid = document.getElementById("bidO").value
-    }
+    
     console.log(oBid,xBid)
     if (oBid > xBid){
       xIsNext = false
-      xBank += parseInt(oBid)
-      oBank -= parseInt(oBid)
+      xBank = current.xBank + parseInt(oBid)
+      oBank = current.oBank - parseInt(oBid)
     } else if (oBid < xBid) {
       xIsNext = true
-      oBank += parseInt(xBid)
-      xBank -= parseInt(xBid)
+      oBank = current.oBank + parseInt(xBid)
+      xBank = current.xBank - parseInt(xBid)
     } else {
       return false;
     }
-
+    console.log(oBank,xBank)
     document.getElementById("bidX").value = null
     document.getElementById("bidO").value = null
 
@@ -94,7 +117,6 @@ class Game extends Component {
     const history = this.state.history;
     const current = history[this.state.stepNumber];
     const winner = calculateWinner(current.squares);
-    var { xBank,  oBank, oLastBid, xLastBid} = this.state
     console.log("rendering")
     
     const moves = history.map((step, move) => {
@@ -116,12 +138,12 @@ class Game extends Component {
     return (
       <div className="game">
         <div id="popupX">
-          <div>Enter Password:</div>
+          <div>Enter X Bid:</div>
           <input id="bidX" type="password"/>
         </div>
 
         <div id="popupO">
-          <div>Enter Password:</div>
+          <div>Enter O Bid:</div>
           <input id="bidO" type="password"/>
         </div>
 
@@ -134,10 +156,10 @@ class Game extends Component {
 
         <div className="game-info">
           <div>{status}</div>
-          <div>xBank:{xBank}</div>
-          <div>oBank:{oBank}</div>
-          <div>xLastBid:{xLastBid}</div>
-          <div>oLastBid:{oLastBid}</div>
+          <div>xBank:{current.xBank}</div>
+          <div>oBank:{current.oBank}</div>
+          <div>xLastBid:{current.xLastBid}</div>
+          <div>oLastBid:{current.oLastBid}</div>
           <ol>{moves}</ol>
         </div>
         <h1 onClick={this.bid.bind(this)}>BID</h1>
